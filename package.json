@@ -1,0 +1,11 @@
+{
+  "name": "temp-music-player",
+  "version": "1.0.0",
+  "description": "Temporary in-memory music sharing player (no DB)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "MIT"
+}
