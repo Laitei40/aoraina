@@ -247,10 +247,18 @@
     // Only the original uploader can delete
     deleteBtn.disabled = !isUploader;
 
-    if (isUploader) {
-      setStatus('Your uploaded audio is ready. You can delete it anytime.');
-    } else {
+    // Hide share/delete UI for viewers
+    const shareRow = document.querySelector('.share-row');
+    const actionsRow = document.querySelector('.actions-row');
+    
+    if (!isUploader) {
+      shareRow.style.display = 'none';
+      actionsRow.style.display = 'none';
       setStatus('You are listening to a temporary shared track.');
+    } else {
+      shareRow.style.display = 'flex';
+      actionsRow.style.display = 'flex';
+      setStatus('Your uploaded audio is ready. You can delete it anytime.');
     }
   }
 
