@@ -122,6 +122,33 @@ body {
   font-size: 0.85rem;
 }
 
+.upload-progress {
+  margin-top: 12px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #22c55e);
+  border-radius: 999px;
+  transition: width 0.2s ease-out;
+  width: 0%;
+}
+
+.progress-text {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-align: center;
+}
+
 .audio-wrapper {
   margin-top: 12px;
   padding: 12px 12px 10px;
@@ -166,6 +193,64 @@ body {
 }
 
 #seek::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  border: none;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.3);
+}
+
+.volume-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.btn-icon {
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(129, 140, 248, 0.4);
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: background-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.btn-icon:hover {
+  background: rgba(99, 102, 241, 0.25);
+  transform: scale(1.05);
+}
+
+.btn-icon:active {
+  transform: scale(0.95);
+}
+
+#volume {
+  flex: 1;
+  cursor: pointer;
+  appearance: none;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.35);
+  outline: none;
+}
+
+#volume::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.3);
+}
+
+#volume::-moz-range-thumb {
   width: 12px;
   height: 12px;
   border-radius: 999px;

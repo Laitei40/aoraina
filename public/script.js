@@ -25,6 +25,12 @@
   const deleteBtn = document.getElementById('delete-audio');
   const statusEl = document.getElementById('status');
 
+  const uploadProgress = document.getElementById('upload-progress');
+  const progressFill = document.getElementById('progress-fill');
+  const progressText = document.getElementById('progress-text');
+  const volumeSlider = document.getElementById('volume');
+  const muteToggle = document.getElementById('mute-toggle');
+
   // Current audio token issued by the server (for uploader or viewer)
   let currentToken = null;
   let isUploader = false; // true if this page created the token by uploading
@@ -89,31 +95,57 @@
   }
 
   async function uploadFile(file) {
-    setStatus('Uploading and preparing temporary link…');
+    return new Promise((resolve, reject) => {
+      const uploadUrl = '/api/upload';
 
-    const uploadUrl = '/api/upload';
+      const xhr = new XMLHttpRequest();
 
-    const resp = await fetch(uploadUrl, {
-      method: 'POST',
-      // We send only the raw file bytes as the body. The Node server
-      // reads it into memory and associates it with a unique token.
-      body: file,
-      headers: {
-        'Content-Type': file.type || 'application/octet-stream',
-        'X-Filename': encodeURIComponent(file.name || 'audio'),
-        'X-Mime-Type': file.type || 'audio/mpeg',
-      },
+      // Track upload progress
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          const percentComplete = Math.round((e.loaded / e.total) * 100);
+          progressFill.style.width = percentComplete + '%';
+          progressText.textContent = percentComplete + '%';
+        }
+      });
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (!data.token) {
+              reject(new Error('Server did not return a token'));
+            } else {
+              resolve(data.token);
+            }
+          } catch (e) {
+            reject(new Error('Invalid server response'));
+          }
+        } else {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            reject(new Error(data.error || 'Upload failed'));
+          } catch (e) {
+            reject(new Error('Upload failed'));
+          }
+        }
+      });
+
+      xhr.addEventListener('error', () => {
+        reject(new Error('Network error during upload'));
+      });
+
+      xhr.addEventListener('abort', () => {
+        reject(new Error('Upload cancelled'));
+      });
+
+      xhr.open('POST', uploadUrl, true);
+      xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+      xhr.setRequestHeader('X-Filename', encodeURIComponent(file.name || 'audio'));
+      xhr.setRequestHeader('X-Mime-Type', file.type || 'audio/mpeg');
+
+      xhr.send(file);
     });
-
-    if (!resp.ok) {
-      const data = await resp.json().catch(() => ({}));
-      throw new Error(data.error || 'Upload failed');
-    }
-
-    const data = await resp.json();
-    if (!data.token) throw new Error('Server did not return a token');
-
-    return data.token;
   }
 
   async function checkToken(token) {
@@ -172,8 +204,18 @@
     hideMessage();
     resetPlayerState();
 
+    // Show and reset progress bar
+    uploadProgress.classList.remove('hidden');
+    progressFill.style.width = '0%';
+    progressText.textContent = '0%';
+    setStatus('Uploading and preparing temporary link…');
+
     try {
       const token = await uploadFile(file);
+      
+      // Hide progress bar after successful upload
+      uploadProgress.classList.add('hidden');
+      
       currentToken = token;
       isUploader = true;
       markAsUploader(token); // Remember this browser uploaded this token
@@ -208,6 +250,7 @@
       );
     } catch (err) {
       console.error(err);
+      uploadProgress.classList.add('hidden');
       setStatus(err.message || 'Upload failed', 'error');
       resetPlayerState();
     }
@@ -300,6 +343,36 @@
     if (!audio.duration) return;
     const pct = parseFloat(seek.value) || 0;
     audio.currentTime = (pct / 100) * audio.duration;
+  });
+
+  // Volume controls
+  volumeSlider.addEventListener('input', () => {
+    const volume = parseFloat(volumeSlider.value) / 100;
+    audio.volume = volume;
+    
+    // Update mute button icon based on volume
+    if (volume === 0) {
+      muteToggle.textContent = '🔇';
+    } else if (volume < 0.5) {
+      muteToggle.textContent = '🔉';
+    } else {
+      muteToggle.textContent = '🔊';
+    }
+  });
+
+  muteToggle.addEventListener('click', () => {
+    if (audio.muted) {
+      audio.muted = false;
+      const volume = parseFloat(volumeSlider.value) / 100;
+      if (volume === 0) {
+        volumeSlider.value = 50;
+        audio.volume = 0.5;
+      }
+      muteToggle.textContent = audio.volume < 0.5 ? '🔉' : '🔊';
+    } else {
+      audio.muted = true;
+      muteToggle.textContent = '🔇';
+    }
   });
 
   copyLinkBtn.addEventListener('click', async () => {
